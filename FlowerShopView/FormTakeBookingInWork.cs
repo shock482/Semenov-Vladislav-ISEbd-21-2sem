@@ -10,18 +10,29 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using Unity;
+using Unity.Attributes;
 
 namespace FlowerShopView
 {
     public partial class FormTakeBookingInWork : Form
     {
-        public int Id { set { id = value; } }
+        [Dependency]
+        public new IUnityContainer Container { get; set; }
+
+        public int ID { set { id = value; } }
+
+        private readonly InterfaceExecutorService serviceExecutor;
+
+        private readonly InterfaceMainService serviceMain;
 
         private int? id;
 
-        public FormTakeBookingInWork()
+        public FormTakeBookingInWork(InterfaceExecutorService serviceI, InterfaceMainService serviceM)
         {
             InitializeComponent();
+            this.serviceExecutor = serviceI;
+            this.serviceMain = serviceM;
         }
 
         private void FormTakeOrderInWork_Load(object sender, EventArgs e)
@@ -33,21 +44,17 @@ namespace FlowerShopView
                     MessageBox.Show("Не указан заказ", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     Close();
                 }
-                List<ModelExecutorView> list = Task.Run(() => APICustomer.GetRequestData<List<ModelExecutorView>>("api/Executor/GetList")).Result;
-                if (list != null)
+                List<ModelExecutorView> listExecutor = serviceExecutor.getList();
+                if (listExecutor != null)
                 {
                     comboBoxExecutor.DisplayMember = "ExecutorFullName";
                     comboBoxExecutor.ValueMember = "Id";
-                    comboBoxExecutor.DataSource = list;
+                    comboBoxExecutor.DataSource = listExecutor;
                     comboBoxExecutor.SelectedItem = null;
                 }
             }
             catch (Exception ex)
             {
-                while (ex.InnerException != null)
-                {
-                    ex = ex.InnerException;
-                }
                 MessageBox.Show(ex.Message, "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
@@ -61,39 +68,24 @@ namespace FlowerShopView
             }
             try
             {
-                int implementerId = Convert.ToInt32(comboBoxExecutor.SelectedValue);
-                Task task = Task.Run(() => APICustomer.PostRequestData("api/Main/TakeBookingInWork", new BoundBookingModel
+                serviceMain.takeOrderInWork(new BoundBookingModel
                 {
                     ID = id.Value,
-                    ExecutorID = implementerId
-                }));
-
-                task.ContinueWith((prevTask) => MessageBox.Show("Заказ передан в работу. Обновите список", "Сообщение", MessageBoxButtons.OK, MessageBoxIcon.Information),
-                    TaskContinuationOptions.OnlyOnRanToCompletion);
-                task.ContinueWith((prevTask) =>
-                {
-                    var ex = (Exception)prevTask.Exception;
-                    while (ex.InnerException != null)
-                    {
-                        ex = ex.InnerException;
-                    }
-                    MessageBox.Show(ex.Message, "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                }, TaskContinuationOptions.OnlyOnFaulted);
-
+                    ExecutorID = Convert.ToInt32(comboBoxExecutor.SelectedValue)
+                });
+                MessageBox.Show("Сохранение прошло успешно", "Информация", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                DialogResult = DialogResult.OK;
                 Close();
             }
             catch (Exception ex)
             {
-                while (ex.InnerException != null)
-                {
-                    ex = ex.InnerException;
-                }
                 MessageBox.Show(ex.Message, "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
         private void buttonCancel_Click(object sender, EventArgs e)
         {
+            DialogResult = DialogResult.Cancel;
             Close();
         }
     }

@@ -1,6 +1,5 @@
 ﻿using FlowerShopService.Interfaces;
 using FlowerShopService.ViewModel;
-using FlowerShopService.DataFromUser;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -10,14 +9,22 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using Unity;
+using Unity.Attributes;
 
 namespace FlowerShopView
 {
     public partial class FormExecutors : Form
     {
-        public FormExecutors()
+        [Dependency]
+        public new IUnityContainer Container { get; set; }
+
+        private readonly InterfaceExecutorService service;
+
+        public FormExecutors(InterfaceExecutorService service)
         {
             InitializeComponent();
+            this.service = service;
         }
 
         private void FormImplementers_Load(object sender, EventArgs e)
@@ -29,7 +36,7 @@ namespace FlowerShopView
         {
             try
             {
-                List<ModelExecutorView> list = Task.Run(() => APICustomer.GetRequestData<List<ModelExecutorView>>("api/Executor/GetList")).Result;
+                List<ModelExecutorView> list = service.getList();
                 if (list != null)
                 {
                     dataGridViewExecutors.DataSource = list;
@@ -39,29 +46,25 @@ namespace FlowerShopView
             }
             catch (Exception ex)
             {
-                while (ex.InnerException != null)
-                {
-                    ex = ex.InnerException;
-                }
                 MessageBox.Show(ex.Message, "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
         private void buttonAdd_Click(object sender, EventArgs e)
         {
-            var form = new FormExecutor();
-            form.ShowDialog();
+            var form = Container.Resolve<FormExecutor>();
+            if (form.ShowDialog() == DialogResult.OK)
+                LoadData();
         }
 
         private void buttonUpd_Click(object sender, EventArgs e)
         {
             if (dataGridViewExecutors.SelectedRows.Count == 1)
             {
-                var form = new FormExecutor
-                {
-                    Id = Convert.ToInt32(dataGridViewExecutors.SelectedRows[0].Cells[0].Value)
-                };
-                form.ShowDialog();
+                var form = Container.Resolve<FormExecutor>();
+                form.ID = Convert.ToInt32(dataGridViewExecutors.SelectedRows[0].Cells[0].Value);
+                if (form.ShowDialog() == DialogResult.OK)
+                    LoadData();
             }
         }
 
@@ -69,24 +72,18 @@ namespace FlowerShopView
         {
             if (dataGridViewExecutors.SelectedRows.Count == 1)
             {
-                if (MessageBox.Show("Удалить запись", "Вопрос", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+                if (MessageBox.Show("Удалить запись?", "Внимание", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
                 {
                     int id = Convert.ToInt32(dataGridViewExecutors.SelectedRows[0].Cells[0].Value);
-
-                    Task task = Task.Run(() => APICustomer.PostRequestData("api/Executor/DelElement", new BoundCustomerModel { ID = id }));
-
-                    task.ContinueWith((prevTask) => MessageBox.Show("Запись удалена. Обновите список", "Успех", MessageBoxButtons.OK, MessageBoxIcon.Information),
-                    TaskContinuationOptions.OnlyOnRanToCompletion);
-
-                    task.ContinueWith((prevTask) =>
+                    try
                     {
-                        var ex = (Exception)prevTask.Exception;
-                        while (ex.InnerException != null)
-                        {
-                            ex = ex.InnerException;
-                        }
+                        service.deleteElement(id);
+                    }
+                    catch (Exception ex)
+                    {
                         MessageBox.Show(ex.Message, "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    }, TaskContinuationOptions.OnlyOnFaulted);
+                    }
+                    LoadData();
                 }
             }
         }

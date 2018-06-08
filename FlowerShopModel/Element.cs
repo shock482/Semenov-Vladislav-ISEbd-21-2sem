@@ -1,6 +1,8 @@
-﻿using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace FlowerShopModel
 {
@@ -8,13 +10,6 @@ namespace FlowerShopModel
     {
         public int ID { get; set; }
 
-        [Required]
         public string ElementName { get; set; }
-
-        [ForeignKey("ElementID")]
-        public virtual List<OutputElement> OutputElements { get; set; }
-
-        [ForeignKey("ElementID")]
-        public virtual List<ReserveElement> ReserveElements { get; set; }
     }
 }

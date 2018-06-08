@@ -1,18 +1,24 @@
 ﻿using FlowerShopService.Interfaces;
 using FlowerShopService.ViewModel;
-using FlowerShopService.DataFromUser;
 using System;
 using System.Collections.Generic;
 using System.Windows.Forms;
-using System.Threading.Tasks;
+using Unity;
+using Unity.Attributes;
 
 namespace FlowerShopView
 {
     public partial class FormOutputs : Form
     {
-        public FormOutputs()
+        [Dependency]
+        public new IUnityContainer Container { get; set; }
+
+        private readonly InterfaceOutputService service;
+
+        public FormOutputs(InterfaceOutputService service)
         {
             InitializeComponent();
+            this.service = service;
         }
 
         private void FormProducts_Load(object sender, EventArgs e)
@@ -24,7 +30,7 @@ namespace FlowerShopView
         {
             try
             {
-                List<ModelOutputView> list = Task.Run(() => APICustomer.GetRequestData<List<ModelOutputView>>("api/Output/GetList")).Result;
+                List<ModelOutputView> list = service.getList();
                 if (list != null)
                 {
                     dataGridViewProducts.DataSource = list;
@@ -34,29 +40,25 @@ namespace FlowerShopView
             }
             catch (Exception ex)
             {
-                while (ex.InnerException != null)
-                {
-                    ex = ex.InnerException;
-                }
                 MessageBox.Show(ex.Message, "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
         private void buttonAdd_Click(object sender, EventArgs e)
         {
-            var form = new FormOutput();
-            form.ShowDialog();
+            var form = Container.Resolve<FormOutput>();
+            if (form.ShowDialog() == DialogResult.OK)
+                LoadData();
         }
 
         private void buttonUpd_Click(object sender, EventArgs e)
         {
             if (dataGridViewProducts.SelectedRows.Count == 1)
             {
-                var form = new FormOutput
-                {
-                    Id = Convert.ToInt32(dataGridViewProducts.SelectedRows[0].Cells[0].Value)
-                };
-                form.ShowDialog();
+                var form = Container.Resolve<FormOutput>();
+                form.ID = Convert.ToInt32(dataGridViewProducts.SelectedRows[0].Cells[0].Value);
+                if (form.ShowDialog() == DialogResult.OK)
+                    LoadData();
             }
         }
 
@@ -64,24 +66,18 @@ namespace FlowerShopView
         {
             if (dataGridViewProducts.SelectedRows.Count == 1)
             {
-                if (MessageBox.Show("Удалить запись", "Вопрос", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+                if (MessageBox.Show("Удалить запись?", "Внимание", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
                 {
                     int id = Convert.ToInt32(dataGridViewProducts.SelectedRows[0].Cells[0].Value);
-
-                    Task task = Task.Run(() => APICustomer.PostRequestData("api/Output/DelElement", new BoundCustomerModel { ID = id }));
-
-                    task.ContinueWith((prevTask) => MessageBox.Show("Запись удалена. Обновите список", "Успех", MessageBoxButtons.OK, MessageBoxIcon.Information),
-                    TaskContinuationOptions.OnlyOnRanToCompletion);
-
-                    task.ContinueWith((prevTask) =>
+                    try
                     {
-                        var ex = (Exception)prevTask.Exception;
-                        while (ex.InnerException != null)
-                        {
-                            ex = ex.InnerException;
-                        }
+                        service.deleteElement(id);
+                    }
+                    catch (Exception ex)
+                    {
                         MessageBox.Show(ex.Message, "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    }, TaskContinuationOptions.OnlyOnFaulted);
+                    }
+                    LoadData();
                 }
             }
         }

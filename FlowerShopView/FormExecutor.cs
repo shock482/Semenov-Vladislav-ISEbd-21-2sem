@@ -2,21 +2,27 @@
 using FlowerShopService.Interfaces;
 using FlowerShopService.ViewModel;
 using System;
-using System.Net.Http;
-using System.Threading.Tasks;
 using System.Windows.Forms;
+using Unity;
+using Unity.Attributes;
 
 namespace FlowerShopView
 {
     public partial class FormExecutor : Form
     {
-        public int Id { set { id = value; } }
+        [Dependency]
+        public new IUnityContainer Container { get; set; }
+
+        public int ID { set { id = value; } }
+
+        private readonly InterfaceExecutorService service;
 
         private int? id;
 
-        public FormExecutor()
+        public FormExecutor(InterfaceExecutorService service)
         {
             InitializeComponent();
+            this.service = service;
         }
 
         private void FormImplementer_Load(object sender, EventArgs e)
@@ -25,15 +31,12 @@ namespace FlowerShopView
             {
                 try
                 {
-                    var implementer = Task.Run(() => APICustomer.GetRequestData<ModelExecutorView>("api/Executor/Get/" + id.Value)).Result;
-                    textBoxFullName.Text = implementer.ExecutorFullName;
+                    ModelExecutorView view = service.getElement(id.Value);
+                    if (view != null)
+                        textBoxFullName.Text = view.ExecutorFullName;
                 }
                 catch (Exception ex)
                 {
-                    while (ex.InnerException != null)
-                    {
-                        ex = ex.InnerException;
-                    }
                     MessageBox.Show(ex.Message, "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
@@ -46,41 +49,36 @@ namespace FlowerShopView
                 MessageBox.Show("Заполните ФИО", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
-            string fio = textBoxFullName.Text;
-            Task task;
-            if (id.HasValue)
+            try
             {
-                task = Task.Run(() => APICustomer.PostRequestData("api/Executor/UpdElement", new BoundExecutorModel
+                if (id.HasValue)
                 {
-                    ID = id.Value,
-                    ExecutorFullName = fio
-                }));
-            }
-            else
-            {
-                task = Task.Run(() => APICustomer.PostRequestData("api/Executor/AddElement", new BoundExecutorModel
-                {
-                    ExecutorFullName = fio
-                }));
-            }
-
-            task.ContinueWith((prevTask) => MessageBox.Show("Сохранение прошло успешно. Обновите список", "Сообщение", MessageBoxButtons.OK, MessageBoxIcon.Information),
-                TaskContinuationOptions.OnlyOnRanToCompletion);
-            task.ContinueWith((prevTask) =>
-            {
-                var ex = (Exception)prevTask.Exception;
-                while (ex.InnerException != null)
-                {
-                    ex = ex.InnerException;
+                    service.updateElement(new BoundExecutorModel
+                    {
+                        ID = id.Value,
+                        ExecutorFullName = textBoxFullName.Text
+                    });
                 }
+                else
+                {
+                    service.addElement(new BoundExecutorModel
+                    {
+                        ExecutorFullName = textBoxFullName.Text
+                    });
+                }
+                MessageBox.Show("Сохранение прошло успешно", "Информация", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                DialogResult = DialogResult.OK;
+                Close();
+            }
+            catch (Exception ex)
+            {
                 MessageBox.Show(ex.Message, "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }, TaskContinuationOptions.OnlyOnFaulted);
-
-            Close();
+            }
         }
 
         private void buttonCancel_Click(object sender, EventArgs e)
         {
+            DialogResult = DialogResult.Cancel;
             Close();
         }
     }

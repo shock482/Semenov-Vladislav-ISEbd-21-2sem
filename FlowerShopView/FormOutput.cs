@@ -3,23 +3,29 @@ using FlowerShopService.Interfaces;
 using FlowerShopService.ViewModel;
 using System;
 using System.Collections.Generic;
-using System.Net.Http;
-using System.Threading.Tasks;
 using System.Windows.Forms;
+using Unity;
+using Unity.Attributes;
 
 namespace FlowerShopView
 {
     public partial class FormOutput : Form
     {
-        public int Id { set { id = value; } }
+        [Dependency]
+        public new IUnityContainer Container { get; set; }
+
+        public int ID { set { id = value; } }
+
+        private readonly InterfaceOutputService service;
 
         private int? id;
 
-        private List<ModelProdElementView> productComponents;
+        private List<ModelProdElementView> productElements;
 
-        public FormOutput()
+        public FormOutput(InterfaceOutputService service)
         {
             InitializeComponent();
+            this.service = service;
         }
 
         private void FormProduct_Load(object sender, EventArgs e)
@@ -28,35 +34,32 @@ namespace FlowerShopView
             {
                 try
                 {
-                    var product = Task.Run(() => APICustomer.GetRequestData<ModelOutputView>("api/Output/Get/" + id.Value)).Result;
-                    textBoxName.Text = product.OutputName;
-                    textBoxPrice.Text = product.Price.ToString();
-                    productComponents = product.OutputElements;
-                    LoadData();
+                    ModelOutputView view = service.getElement(id.Value);
+                    if (view != null)
+                    {
+                        textBoxName.Text = view.OutputName;
+                        textBoxPrice.Text = view.Price.ToString();
+                        productElements = view.OutputElements;
+                        LoadData();
+                    }
                 }
                 catch (Exception ex)
                 {
-                    while (ex.InnerException != null)
-                    {
-                        ex = ex.InnerException;
-                    }
                     MessageBox.Show(ex.Message, "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
             else
-            {
-                productComponents = new List<ModelProdElementView>();
-            }
+                productElements = new List<ModelProdElementView>();
         }
 
         private void LoadData()
         {
             try
             {
-                if (productComponents != null)
+                if (productElements != null)
                 {
                     dataGridViewProduct.DataSource = null;
-                    dataGridViewProduct.DataSource = productComponents;
+                    dataGridViewProduct.DataSource = productElements;
                     dataGridViewProduct.Columns[0].Visible = false;
                     dataGridViewProduct.Columns[1].Visible = false;
                     dataGridViewProduct.Columns[2].Visible = false;
@@ -71,16 +74,14 @@ namespace FlowerShopView
 
         private void buttonAdd_Click(object sender, EventArgs e)
         {
-            var form = new FormOutputElement();
+            var form = Container.Resolve<FormOutputElement>();
             if (form.ShowDialog() == DialogResult.OK)
             {
                 if (form.Model != null)
                 {
                     if (id.HasValue)
-                    {
                         form.Model.OutputID = id.Value;
-                    }
-                    productComponents.Add(form.Model);
+                    productElements.Add(form.Model);
                 }
                 LoadData();
             }
@@ -90,11 +91,11 @@ namespace FlowerShopView
         {
             if (dataGridViewProduct.SelectedRows.Count == 1)
             {
-                var form = new FormOutputElement();
-                form.Model = productComponents[dataGridViewProduct.SelectedRows[0].Cells[0].RowIndex];
+                var form = Container.Resolve<FormOutputElement>();
+                form.Model = productElements[dataGridViewProduct.SelectedRows[0].Cells[0].RowIndex];
                 if (form.ShowDialog() == DialogResult.OK)
                 {
-                    productComponents[dataGridViewProduct.SelectedRows[0].Cells[0].RowIndex] = form.Model;
+                    productElements[dataGridViewProduct.SelectedRows[0].Cells[0].RowIndex] = form.Model;
                     LoadData();
                 }
             }
@@ -104,11 +105,11 @@ namespace FlowerShopView
         {
             if (dataGridViewProduct.SelectedRows.Count == 1)
             {
-                if (MessageBox.Show("Удалить запись", "Вопрос", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+                if (MessageBox.Show("Удалить запись?", "Внимание", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
                 {
                     try
                     {
-                        productComponents.RemoveAt(dataGridViewProduct.SelectedRows[0].Cells[0].RowIndex);
+                        productElements.RemoveAt(dataGridViewProduct.SelectedRows[0].Cells[0].RowIndex);
                     }
                     catch (Exception ex)
                     {
@@ -136,62 +137,56 @@ namespace FlowerShopView
                 MessageBox.Show("Заполните цену", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
-            if (productComponents == null || productComponents.Count == 0)
+            if (productElements == null || productElements.Count == 0)
             {
                 MessageBox.Show("Заполните компоненты", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
-            List<BoundProdElementModel> productComponentBM = new List<BoundProdElementModel>();
-            for (int i = 0; i < productComponents.Count; ++i)
+            try
             {
-                productComponentBM.Add(new BoundProdElementModel
+                List<BoundProdElementModel> productComponentBM = new List<BoundProdElementModel>();
+                for (int i = 0; i < productElements.Count; ++i)
                 {
-                    ID = productComponents[i].ID,
-                    OutputID = productComponents[i].OutputID,
-                    ElementID = productComponents[i].ElementID,
-                    Count = productComponents[i].Count
-                });
-            }
-            string name = textBoxName.Text;
-            int price = Convert.ToInt32(textBoxPrice.Text);
-            Task task;
-            if (id.HasValue)
-            {
-                task = Task.Run(() => APICustomer.PostRequestData("api/Output/UpdElement", new BoundOutputModel
-                {
-                    ID = id.Value,
-                    OutputName = name,
-                    Price = price,
-                    OutputElements = productComponentBM
-                }));
-            }
-            else
-            {
-                task = Task.Run(() => APICustomer.PostRequestData("api/Output/AddElement", new BoundOutputModel
-                {
-                    OutputName = name,
-                    Price = price,
-                    OutputElements = productComponentBM
-                }));
-            }
-
-            task.ContinueWith((prevTask) => MessageBox.Show("Сохранение прошло успешно. Обновите список", "Сообщение", MessageBoxButtons.OK, MessageBoxIcon.Information),
-                TaskContinuationOptions.OnlyOnRanToCompletion);
-            task.ContinueWith((prevTask) =>
-            {
-                var ex = (Exception)prevTask.Exception;
-                while (ex.InnerException != null)
-                {
-                    ex = ex.InnerException;
+                    productComponentBM.Add(new BoundProdElementModel
+                    {
+                        ID = productElements[i].ID,
+                        OutputID = productElements[i].OutputID,
+                        ElementID = productElements[i].ElementID,
+                        Count = productElements[i].Count
+                    });
                 }
+                if (id.HasValue)
+                {
+                    service.updateElement(new BoundOutputModel
+                    {
+                        ID = id.Value,
+                        OutputName = textBoxName.Text,
+                        Price = Convert.ToInt32(textBoxPrice.Text),
+                        OutputElements = productComponentBM
+                    });
+                }
+                else
+                {
+                    service.addElement(new BoundOutputModel
+                    {
+                        OutputName = textBoxName.Text,
+                        Price = Convert.ToInt32(textBoxPrice.Text),
+                        OutputElements = productComponentBM
+                    });
+                }
+                MessageBox.Show("Сохранение прошло успешно", "Информация", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                DialogResult = DialogResult.OK;
+                Close();
+            }
+            catch (Exception ex)
+            {
                 MessageBox.Show(ex.Message, "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }, TaskContinuationOptions.OnlyOnFaulted);
-
-            Close();
+            }
         }
 
         private void buttonCancel_Click(object sender, EventArgs e)
         {
+            DialogResult = DialogResult.Cancel;
             Close();
         }
     }

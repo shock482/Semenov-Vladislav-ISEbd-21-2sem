@@ -31,7 +31,7 @@ namespace FlowerShopService.ImplementationsList
 
         public ModelExecutorView getElement(int id)
         {
-            Executor element = source.Executors.FirstOrDefault(rec => rec.ID == id);
+            Florost element = source.Executors.FirstOrDefault(rec => rec.ID == id);
             if (element != null)
             {
                 return new ModelExecutorView
@@ -45,13 +45,13 @@ namespace FlowerShopService.ImplementationsList
 
         public void addElement(BoundExecutorModel model)
         {
-            Executor element = source.Executors.FirstOrDefault(rec => rec.ExecutorFullName == model.ExecutorFullName);
+            Florost element = source.Executors.FirstOrDefault(rec => rec.ExecutorFullName == model.ExecutorFullName);
             if (element != null)
             {
                 throw new Exception("Уже есть сотрудник с таким ФИО");
             }
             int maxId = source.Executors.Count > 0 ? source.Executors.Max(rec => rec.ID) : 0;
-            source.Executors.Add(new Executor
+            source.Executors.Add(new Florost
             {
                 ID = maxId + 1,
                 ExecutorFullName = model.ExecutorFullName
@@ -60,7 +60,7 @@ namespace FlowerShopService.ImplementationsList
 
         public void updateElement(BoundExecutorModel model)
         {
-            Executor element = source.Executors.FirstOrDefault(rec =>
+            Florost element = source.Executors.FirstOrDefault(rec =>
                                         rec.ExecutorFullName == model.ExecutorFullName && rec.ID != model.ID);
             if (element != null)
             {
@@ -75,7 +75,7 @@ namespace FlowerShopService.ImplementationsList
 
         public void deleteElement(int id)
         {
-            Executor element = source.Executors.FirstOrDefault(rec => rec.ID == id);
+            Florost element = source.Executors.FirstOrDefault(rec => rec.ID == id);
             if (element != null)
                 source.Executors.Remove(element);
             else

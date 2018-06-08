@@ -3,46 +3,54 @@ using FlowerShopService.Interfaces;
 using FlowerShopService.ViewModel;
 using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
 using System.Windows.Forms;
+using Unity;
+using Unity.Attributes;
 
 namespace FlowerShopView
 {
     public partial class FormPutOnReserve : Form
     {
-        public FormPutOnReserve()
+        [Dependency]
+        public new IUnityContainer Container { get; set; }
+
+        private readonly InterfaceReserveService serviceReserve;
+
+        private readonly InterfaceComponentService serviceComponent;
+
+        private readonly InterfaceMainService serviceMain;
+
+        public FormPutOnReserve(InterfaceReserveService serviceS, InterfaceComponentService serviceC, InterfaceMainService serviceM)
         {
             InitializeComponent();
+            this.serviceReserve = serviceS;
+            this.serviceComponent = serviceC;
+            this.serviceMain = serviceM;
         }
 
         private void FormPutOnStock_Load(object sender, EventArgs e)
         {
             try
             {
-                List<ModelElementView> listC = Task.Run(() => APICustomer.GetRequestData<List<ModelElementView>>("api/Element/GetList")).Result;
-                if (listC != null)
+                List<ModelElementView> listElement = serviceComponent.getList();
+                if (listElement != null)
                 {
                     comboBoxComponent.DisplayMember = "ElementName";
                     comboBoxComponent.ValueMember = "Id";
-                    comboBoxComponent.DataSource = listC;
+                    comboBoxComponent.DataSource = listElement;
                     comboBoxComponent.SelectedItem = null;
                 }
-
-                List<ModelReserveView> listS = Task.Run(() => APICustomer.GetRequestData<List<ModelReserveView>>("api/Reserve/GetList")).Result;
-                if (listS != null)
+                List<ModelReserveView> listReserve = serviceReserve.getList();
+                if (listReserve != null)
                 {
                     comboBoxStock.DisplayMember = "ReserveName";
                     comboBoxStock.ValueMember = "Id";
-                    comboBoxStock.DataSource = listS;
+                    comboBoxStock.DataSource = listReserve;
                     comboBoxStock.SelectedItem = null;
                 }
             }
             catch (Exception ex)
             {
-                while (ex.InnerException != null)
-                {
-                    ex = ex.InnerException;
-                }
                 MessageBox.Show(ex.Message, "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
@@ -66,42 +74,25 @@ namespace FlowerShopView
             }
             try
             {
-                int componentId = Convert.ToInt32(comboBoxComponent.SelectedValue);
-                int stockId = Convert.ToInt32(comboBoxStock.SelectedValue);
-                int count = Convert.ToInt32(textBoxCount.Text);
-                Task task = Task.Run(() => APICustomer.PostRequestData("api/Main/PutElementOnReserve", new BoundResElementModel
+                serviceMain.putComponentOnReserve(new BoundResElementModel
                 {
-                    ElementID = componentId,
-                    ReserveID = stockId,
-                    Count = count
-                }));
-
-                task.ContinueWith((prevTask) => MessageBox.Show("Склад пополнен", "Сообщение", MessageBoxButtons.OK, MessageBoxIcon.Information),
-                    TaskContinuationOptions.OnlyOnRanToCompletion);
-                task.ContinueWith((prevTask) =>
-                {
-                    var ex = (Exception)prevTask.Exception;
-                    while (ex.InnerException != null)
-                    {
-                        ex = ex.InnerException;
-                    }
-                    MessageBox.Show(ex.Message, "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                }, TaskContinuationOptions.OnlyOnFaulted);
-
+                    ElementID = Convert.ToInt32(comboBoxComponent.SelectedValue),
+                    ReserveID = Convert.ToInt32(comboBoxStock.SelectedValue),
+                    Count = Convert.ToInt32(textBoxCount.Text)
+                });
+                MessageBox.Show("Сохранение прошло успешно", "Информация", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                DialogResult = DialogResult.OK;
                 Close();
             }
             catch (Exception ex)
             {
-                while (ex.InnerException != null)
-                {
-                    ex = ex.InnerException;
-                }
                 MessageBox.Show(ex.Message, "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
         private void buttonCancel_Click(object sender, EventArgs e)
         {
+            DialogResult = DialogResult.Cancel;
             Close();
         }
     }

@@ -2,37 +2,44 @@
 using FlowerShopService.ViewModel;
 using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
 using System.Windows.Forms;
+using Unity;
+using Unity.Attributes;
 
 namespace FlowerShopView
 {
     public partial class FormOutputElement : Form
     {
+        [Dependency]
+        public new IUnityContainer Container { get; set; }
+
         public ModelProdElementView Model { set { model = value; } get { return model; } }
+
+        private readonly InterfaceComponentService service;
 
         private ModelProdElementView model;
 
-        public FormOutputElement()
+        public FormOutputElement(InterfaceComponentService service)
         {
             InitializeComponent();
+            this.service = service;
         }
 
         private void FormProductComponent_Load(object sender, EventArgs e)
         {
             try
             {
-                comboBoxComponent.DisplayMember = "ElementName";
-                comboBoxComponent.ValueMember = "Id";
-                comboBoxComponent.DataSource = Task.Run(() => APICustomer.GetRequestData<List<ModelElementView>>("api/Element/GetList")).Result;
-                comboBoxComponent.SelectedItem = null;
+                List<ModelElementView> list = service.getList();
+                if (list != null)
+                {
+                    comboBoxComponent.DisplayMember = "ElementName";
+                    comboBoxComponent.ValueMember = "Id";
+                    comboBoxComponent.DataSource = list;
+                    comboBoxComponent.SelectedItem = null;
+                }
             }
             catch (Exception ex)
             {
-                while (ex.InnerException != null)
-                {
-                    ex = ex.InnerException;
-                }
                 MessageBox.Show(ex.Message, "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
             if (model != null)
@@ -70,7 +77,7 @@ namespace FlowerShopView
                 {
                     model.Count = Convert.ToInt32(textBoxCount.Text);
                 }
-                MessageBox.Show("Сохранение прошло успешно", "Сообщение", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show("Сохранение прошло успешно", "Информация", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 DialogResult = DialogResult.OK;
                 Close();
             }

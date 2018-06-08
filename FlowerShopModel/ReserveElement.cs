@@ -15,9 +15,5 @@ namespace FlowerShopModel
         public int ElementID { get; set; }
 
         public int Count { get; set; }
-
-        public virtual Reserve Reserve { get; set; }
-
-        public virtual Element Element { get; set; }
     }
 }

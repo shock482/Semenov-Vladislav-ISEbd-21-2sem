@@ -2,21 +2,27 @@
 using FlowerShopService.Interfaces;
 using FlowerShopService.ViewModel;
 using System;
-using System.Net.Http;
-using System.Threading.Tasks;
 using System.Windows.Forms;
+using Unity;
+using Unity.Attributes;
 
 namespace FlowerShopView
 {
     public partial class FormReserve : Form
     {
-        public int Id { set { id = value; } }
+        [Dependency]
+        public new IUnityContainer Container { get; set; }
+
+        public int ID { set { id = value; } }
+
+        private readonly InterfaceReserveService service;
 
         private int? id;
 
-        public FormReserve()
+        public FormReserve(InterfaceReserveService service)
         {
             InitializeComponent();
+            this.service = service;
         }
 
         private void FormStock_Load(object sender, EventArgs e)
@@ -25,20 +31,19 @@ namespace FlowerShopView
             {
                 try
                 {
-                    var stock = Task.Run(() => APICustomer.GetRequestData<ModelReserveView>("api/Reserve/Get/" + id.Value)).Result;
-                    textBoxName.Text = stock.ReserveName;
-                    dataGridViewReserve.DataSource = stock.ReserveElements;
-                    dataGridViewReserve.Columns[0].Visible = false;
-                    dataGridViewReserve.Columns[1].Visible = false;
-                    dataGridViewReserve.Columns[2].Visible = false;
-                    dataGridViewReserve.Columns[3].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+                    ModelReserveView view = service.getElement(id.Value);
+                    if (view != null)
+                    {
+                        textBoxName.Text = view.ReserveName;
+                        dataGridViewReserve.DataSource = view.ReserveElements;
+                        dataGridViewReserve.Columns[0].Visible = false;
+                        dataGridViewReserve.Columns[1].Visible = false;
+                        dataGridViewReserve.Columns[2].Visible = false;
+                        dataGridViewReserve.Columns[3].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+                    }
                 }
                 catch (Exception ex)
                 {
-                    while (ex.InnerException != null)
-                    {
-                        ex = ex.InnerException;
-                    }
                     MessageBox.Show(ex.Message, "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
@@ -51,41 +56,36 @@ namespace FlowerShopView
                 MessageBox.Show("Заполните название", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
-            string name = textBoxName.Text;
-            Task task;
-            if (id.HasValue)
+            try
             {
-                task = Task.Run(() => APICustomer.PostRequestData("api/Reserve/UpdElement", new BoundReserveModel
+                if (id.HasValue)
                 {
-                    ID = id.Value,
-                    ReserveName = name
-                }));
-            }
-            else
-            {
-                task = Task.Run(() => APICustomer.PostRequestData("api/Reserve/AddElement", new BoundReserveModel
-                {
-                    ReserveName = name
-                }));
-            }
-
-            task.ContinueWith((prevTask) => MessageBox.Show("Сохранение прошло успешно. Обновите список", "Сообщение", MessageBoxButtons.OK, MessageBoxIcon.Information),
-                TaskContinuationOptions.OnlyOnRanToCompletion);
-            task.ContinueWith((prevTask) =>
-            {
-                var ex = (Exception)prevTask.Exception;
-                while (ex.InnerException != null)
-                {
-                    ex = ex.InnerException;
+                    service.updateElement(new BoundReserveModel
+                    {
+                        ID = id.Value,
+                        ReserveName = textBoxName.Text
+                    });
                 }
+                else
+                {
+                    service.addElement(new BoundReserveModel
+                    {
+                        ReserveName = textBoxName.Text
+                    });
+                }
+                MessageBox.Show("Сохранение прошло успешно", "Информация", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                DialogResult = DialogResult.OK;
+                Close();
+            }
+            catch (Exception ex)
+            {
                 MessageBox.Show(ex.Message, "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }, TaskContinuationOptions.OnlyOnFaulted);
-
-            Close();
+            }
         }
 
         private void buttonCancel_Click(object sender, EventArgs e)
         {
+            DialogResult = DialogResult.Cancel;
             Close();
         }
     }

@@ -9,7 +9,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FlowerShopService", "SnackB
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FlowerShopView", "SnackBarView\FlowerShopView.csproj", "{AB4FD6EF-AFB9-40A9-B747-EFCE82D1E460}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FlowerShopRestApi", "SnackBarRestApi\FlowerShopRestApi.csproj", "{C2A6ED03-97F2-49BF-8ED1-F2C9C9290C17}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WpfFlowerShop", "WpfSnackBar\WpfFlowerShop.csproj", "{B45B1505-93D8-4BE5-9029-31D0DBD3E325}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -29,15 +29,15 @@ Global
 		{AB4FD6EF-AFB9-40A9-B747-EFCE82D1E460}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{AB4FD6EF-AFB9-40A9-B747-EFCE82D1E460}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{AB4FD6EF-AFB9-40A9-B747-EFCE82D1E460}.Release|Any CPU.Build.0 = Release|Any CPU
-		{C2A6ED03-97F2-49BF-8ED1-F2C9C9290C17}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{C2A6ED03-97F2-49BF-8ED1-F2C9C9290C17}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{C2A6ED03-97F2-49BF-8ED1-F2C9C9290C17}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{C2A6ED03-97F2-49BF-8ED1-F2C9C9290C17}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B45B1505-93D8-4BE5-9029-31D0DBD3E325}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B45B1505-93D8-4BE5-9029-31D0DBD3E325}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B45B1505-93D8-4BE5-9029-31D0DBD3E325}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B45B1505-93D8-4BE5-9029-31D0DBD3E325}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
-		SolutionGuid = {C783DA12-9A8C-4BD2-AC69-EAE1A6F67D09}
+		SolutionGuid = {803D422F-6EFE-4AD4-8861-3D6301518D42}
 	EndGlobalSection
 EndGlobal

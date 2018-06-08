@@ -1,13 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Data.Entity;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using FlowerShopService;
-using FlowerShopService.ImplementationsDB;
 using FlowerShopService.ImplementationsList;
 using FlowerShopService.Interfaces;
+using Unity;
+using Unity.Lifetime;
 
 namespace FlowerShopView
 {
@@ -19,11 +18,24 @@ namespace FlowerShopView
         [STAThread]
         static void Main()
         {
-            APICustomer.Connect();
-            MailClient.CheckMail();
+            var container = BuildUnityContainer();
+
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new FormMain());
+            Application.Run(container.Resolve<FormMain>());
+        }
+
+        public static IUnityContainer BuildUnityContainer()
+        {
+            var currentContainer = new UnityContainer();
+            currentContainer.RegisterType<InterfaceCustomerService, ClientServiceList>(new HierarchicalLifetimeManager());
+            currentContainer.RegisterType<InterfaceComponentService, ComponentServiceList>(new HierarchicalLifetimeManager());
+            currentContainer.RegisterType<InterfaceExecutorService, ExecutorServiceList>(new HierarchicalLifetimeManager());
+            currentContainer.RegisterType<InterfaceOutputService, ProductServiceList>(new HierarchicalLifetimeManager());
+            currentContainer.RegisterType<InterfaceReserveService, ReserveServiceList>(new HierarchicalLifetimeManager());
+            currentContainer.RegisterType<InterfaceMainService, MainServiceList>(new HierarchicalLifetimeManager());
+
+            return currentContainer;
         }
     }
 }
