@@ -24,6 +24,7 @@ namespace FlowerShopView
         {
             try
             {
+                MailClient.CheckMail();
                 List<ModelCustomerView> list = Task.Run(() => APICustomer.GetRequestData<List<ModelCustomerView>>("api/Customer/GetList")).Result;
                 if (list != null)
                 {

@@ -55,6 +55,7 @@ namespace FlowerShopRestApi
             container.RegisterType<InterfaceReserveService, ReserveServiceDB>(new HierarchicalLifetimeManager());
             container.RegisterType<InterfaceMainService, MainServiceBD>(new HierarchicalLifetimeManager());
             container.RegisterType<InterfaceReportService, ReportServiceDB>(new HierarchicalLifetimeManager());
+            container.RegisterType<InterfaceMessageInfoService, MessageInfoServiceDB>(new HierarchicalLifetimeManager());
         }
     }
 }

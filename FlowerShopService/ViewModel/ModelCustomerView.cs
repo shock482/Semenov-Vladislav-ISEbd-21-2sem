@@ -1,4 +1,5 @@
-﻿using System.Runtime.Serialization;
+﻿using System.Collections.Generic;
+using System.Runtime.Serialization;
 
 namespace FlowerShopService.ViewModel
 {
@@ -9,6 +10,12 @@ namespace FlowerShopService.ViewModel
         public int ID { get; set; }
 
         [DataMember]
+        public string Mail { get; set; }
+
+        [DataMember]
         public string CustomerFullName { get; set; }
+
+        [DataMember]
+        public List<ModelMessageInfoView> Messages { get; set; }
     }
 }
