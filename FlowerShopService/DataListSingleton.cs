@@ -15,7 +15,7 @@ namespace FlowerShopModel
 
         public List<Element> Elements { get; set; }
 
-        public List<Florost> Executors { get; set; }
+        public List<Executor> Executors { get; set; }
 
         public List<Booking> Bookings { get; set; }
 
@@ -31,7 +31,7 @@ namespace FlowerShopModel
         {
             Customers = new List<Customer>();
             Elements = new List<Element>();
-            Executors = new List<Florost>();
+            Executors = new List<Executor>();
             Bookings = new List<Booking>();
             Outputs = new List<Output>();
             OutputElements = new List<OutputElement>();

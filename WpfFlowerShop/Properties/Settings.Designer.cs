@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace WpfSnackBar.Properties
+namespace WpfFlowerShop.Properties
 {
 
 
