@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace FlowerShopModel
 {
-    public class Executor
+    public class Florost
     {
         public int ID { get; set; }
 
