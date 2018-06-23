@@ -17,7 +17,7 @@ using System.Windows.Shapes;
 using Unity;
 using Unity.Attributes;
 
-namespace WpfSnackBar
+namespace WpfFlowerShop
 {
     // <summary>
     // Логика взаимодействия для FormOutputs.xaml
@@ -25,7 +25,7 @@ namespace WpfSnackBar
     public partial class FormOutputs : Window
     {
         [Dependency]
-        public new IUnityContainer Container { get; set; }
+        public IUnityContainer Container { get; set; }
 
         private readonly InterfaceOutputService service;
 
